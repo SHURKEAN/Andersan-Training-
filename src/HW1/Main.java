@@ -160,13 +160,6 @@ public class Main {
                     System.out.println("Invalid input.");
             }
         }
-
-        try {
-            throw new ReservationException("This is a test of the exception system.");
-        } catch (ReservationException e) {
-            System.out.println("Caught exception: " + e.getMessage());
-        }
-
     }
 
 }
