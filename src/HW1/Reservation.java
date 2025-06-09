@@ -31,6 +31,19 @@ public class Reservation {
         return workspaceId;
     }
 
+    public String getDate() {
+        return date;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public String getEndTime() {
+        return endTime;
+    }
+
+
     @Override
     public String toString() {
         return "Reservation ID: " + reservationId + "\nCustomer Name: " + customerName + "\nWorkspace ID: " + workspaceId + "\nDate: " + date + "\nStart: " + startTime + "\nEnd: " + endTime;

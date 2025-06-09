@@ -1,14 +1,15 @@
-package HW1;//Notes
+package HW1;
 //An id
-// a type
-// whether it's avaliable
-//
+//Whether it is avalaiable
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class Workspace {
     private int id;
     private String type;
     private boolean isAvailable;
+    private List<Reservation> reservations = new ArrayList<>();
 
     public Workspace(int id, String type, boolean isAvailable) {
         this.id = id;
@@ -16,7 +17,6 @@ public class Workspace {
         this.isAvailable = isAvailable;
     }
 
-    //Getter
     public int getId() {
         return id;
     }
@@ -29,14 +29,16 @@ public class Workspace {
         return isAvailable;
     }
 
-    // Setter
     public void setAvailable(boolean available) {
         isAvailable = available;
+    }
+
+    public void addReservation(Reservation r) {
+        reservations.add(r);
     }
 
     @Override
     public String toString() {
         return "Workspace ID: " + id + ", Type: " + type + ", Available: " + (isAvailable ? "Yes" : "No");
     }
-
 }
