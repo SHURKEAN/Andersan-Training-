@@ -10,6 +10,7 @@ public class Main {
     static ArrayList<Workspace> workspaceList = new ArrayList<>();
     static ArrayList<Reservation> reservationList = new ArrayList<>();
     static final String FILE_NAME = "reservations.txt";
+    static PluginClassLoader pluginLoader = new PluginClassLoader("./plugins");
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -87,13 +88,37 @@ public class Main {
                     for (Reservation r : reservationList)
                         System.out.println(r);
                     break;
+//                case "2":
+//                    System.out.print("Enter ID: ");
+//                    int id = Integer.parseInt(scanner.nextLine());
+//                    System.out.print("Enter Type: ");
+//                    String type = scanner.nextLine();
+//                    workspaceList.add(new Workspace(id, type, true));
+//                    break;
+
+
                 case "2":
-                    System.out.print("Enter ID: ");
-                    int id = Integer.parseInt(scanner.nextLine());
-                    System.out.print("Enter Type: ");
-                    String type = scanner.nextLine();
-                    workspaceList.add(new Workspace(id, type, true));
+                    System.out.print("Enter fully-qualified class name (e.g., plugins.HotDeskVIP): ");
+                    String fqcn = scanner.nextLine();
+                    try {
+                        Class<?> c = pluginLoader.loadClass(fqcn);
+                        Object obj = c.getDeclaredConstructor().newInstance();
+                        if (obj instanceof Workspace) {
+                            workspaceList.add((Workspace) obj);
+                            System.out.println("Plug-in workspace added: " + obj);
+                        } else {
+                            System.out.println("Class loaded but it is not a Workspace.");
+                        }
+                    } catch (Exception ex) {
+                        System.out.println("Could not load workspace: " + ex.getMessage());
+                    }
                     break;
+
+
+
+
+
+
                 case "3":
                     System.out.print("Enter ID to remove: ");
                     int removeId = Integer.parseInt(scanner.nextLine());
