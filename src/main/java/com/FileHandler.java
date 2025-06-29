@@ -1,4 +1,4 @@
-package HW1;
+package com;
 
 import java.io.*;
 import java.util.*;

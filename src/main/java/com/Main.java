@@ -1,4 +1,4 @@
-package HW1;
+package com;
 // HW1 initial commit for PR
 import java.io.IOException;
 import java.util.ArrayList;

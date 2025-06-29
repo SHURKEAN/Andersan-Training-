@@ -1,4 +1,4 @@
-package HW1;
+package com;
 
 public class Reservation {
     private static int nextId = 1;

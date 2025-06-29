@@ -1,4 +1,4 @@
-package HW1;
+package com;
 
 public class ReservationException extends Exception {
     public ReservationException(String message) {

@@ -1,4 +1,4 @@
-package HW1;
+package com;
 //An id
 //Whether it is avalaiable
 

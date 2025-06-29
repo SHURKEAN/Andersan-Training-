@@ -1,6 +1,6 @@
 package plugins;
 
-import HW1.Workspace;
+import com.Workspace;
 
 /**
  * A fancier workspace that will be loaded at runtime.

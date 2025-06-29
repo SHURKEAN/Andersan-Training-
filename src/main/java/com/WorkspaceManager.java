@@ -1,6 +1,4 @@
-package HW1;
-
-import HW1.Workspace;
+package com;
 
 import java.util.List;
 import java.util.ArrayList;
