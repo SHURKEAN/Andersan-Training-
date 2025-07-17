@@ -1,0 +1,8 @@
+com\Main.class
+com\Workspace.class
+com\WorkspaceManager.class
+plugins\HotDeskVIP.class
+com\Reservation.class
+com\ReservationException.class
+com\PluginClassLoader.class
+com\FileHandler.class
