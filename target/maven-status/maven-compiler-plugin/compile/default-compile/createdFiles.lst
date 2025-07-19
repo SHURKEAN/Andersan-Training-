@@ -6,6 +6,7 @@ com\PluginClassLoader.class
 com\db\Db.class
 com\db\DbSmoke.class
 com\db\ReservationDao.class
+com\db\JpaUtil.class
 com\Workspace.class
 com\Reservation.class
 com\db\ReservationDao$1.class

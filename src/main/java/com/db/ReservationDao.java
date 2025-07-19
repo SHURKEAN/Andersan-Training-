@@ -1,6 +1,7 @@
 package com.db;
 
 import com.Reservation;
+import com.Workspace;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -108,4 +109,11 @@ public class ReservationDao {
         return null;
     }
 
+    public int insert(String customer, Workspace workspace, String date, String start, String end) {
+        return 0;
+    }
+
+    public Workspace findWorkspaceForReservation(int resId) {
+        return null;
+    }
 }

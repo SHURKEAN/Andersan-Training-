@@ -43,7 +43,33 @@
             <version>RELEASE</version>
             <scope>compile</scope>
         </dependency>
+
+
+        <!-- JPA API (Jakarta 3.1 = JPA 3.1) -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
+        <!-- Hibernate ORM 6 (implements JPA) -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>6.5.2.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.3</version>
+            <!-- NO <scope> tag here -->
+        </dependency>
+
+
     </dependencies>
+
+
 
     <!-- ─── Build & plugins ───────────────────────────────────────────────── -->
     <build>
@@ -59,6 +85,18 @@
                     <target>17</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>            <!-- upgrade from 3.0.0 -->
+                <configuration>
+                    <mainClass>com.Main</mainClass>
+                    <!-- ensures all runtime deps (like the driver) are on class‑path -->
+                    <classpathScope>runtime</classpathScope>
+                </configuration>
+            </plugin>
+
 
             <!-- Explicit test runner: Surefire + JUnit 5 -->
             <plugin>

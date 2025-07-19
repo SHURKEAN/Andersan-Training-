@@ -1,94 +1,65 @@
 package com.db;
 
 import com.Workspace;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 
-import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class WorkspaceDao {
 
-    public List<Workspace> findAll() {
-        String sql = "SELECT id, type, is_available FROM workspace ORDER BY id";
-        List<Workspace> list = new ArrayList<>();
-        try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String type = rs.getString("type");
-                boolean avail = rs.getBoolean("is_available");
-                list.add(new Workspace(id, type, avail));
-            }
-        } catch (SQLException e) {
-            System.out.println("DB error (findAll workspaces): " + e.getMessage());
-        }
-        return list;
-    }
-
-    public Optional<Workspace> findById(int id) {
-        String sql = "SELECT id, type, is_available FROM workspace WHERE id = ?";
-        try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(new Workspace(
-                            rs.getInt("id"),
-                            rs.getString("type"),
-                            rs.getBoolean("is_available")));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("DB error (find workspace): " + e.getMessage());
-        }
-        return Optional.empty();
-    }
-
-    /** insert; returns generated id, or -1 on failure */
+    /** Persist a new workspace and return its generated ID */
     public int insert(String type, boolean available) {
-        String sql = "INSERT INTO workspace(type, is_available) VALUES(?,?)";
-        try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            ps.setString(1, type);
-            ps.setBoolean(2, available);
-            ps.executeUpdate();
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) return keys.getInt(1);
-            }
-        } catch (SQLException e) {
-            System.out.println("DB error (insert workspace): " + e.getMessage());
-        }
-        return -1;
-    }
-
-    /** toggle availability */
-    public void updateAvailability(int id, boolean available) {
-        String sql = "UPDATE workspace SET is_available = ? WHERE id = ?";
-        try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setBoolean(1, available);
-            ps.setInt(2, id);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("DB error (update availability): " + e.getMessage());
+        EntityManager em = JpaUtil.em();
+        try {
+            em.getTransaction().begin();
+            Workspace w = new Workspace(type, available);
+            em.persist(w);
+            em.getTransaction().commit();
+            return w.getId();
+        } finally {
+            em.close();
         }
     }
 
-    /** delete; returns true if row removed */
+    /** Remove a workspace; returns true if deleted */
     public boolean delete(int id) {
-        String sql = "DELETE FROM workspace WHERE id = ?";
-        try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.out.println("DB error (delete workspace): " + e.getMessage());
-            return false;
+        EntityManager em = JpaUtil.em();
+        try {
+            Workspace w = em.find(Workspace.class, id);
+            if (w == null) return false;
+            em.getTransaction().begin();
+            em.remove(w);
+            em.getTransaction().commit();
+            return true;
+        } finally {
+            em.close();
+        }
+    }
+
+    /** Fetch every workspace (ordered by ID in JPQL) */
+    public List<Workspace> findAll() {
+        EntityManager em = JpaUtil.em();
+        try {
+            TypedQuery<Workspace> q =
+                    em.createQuery("from Workspace order by id", Workspace.class);
+            return q.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    /** Toggle availability */
+    public void updateAvailability(int id, boolean available) {
+        EntityManager em = JpaUtil.em();
+        try {
+            Workspace w = em.find(Workspace.class, id);
+            if (w == null) return;
+            em.getTransaction().begin();
+            w.setAvailable(available);
+            em.getTransaction().commit();
+        } finally {
+            em.close();
         }
     }
 }
