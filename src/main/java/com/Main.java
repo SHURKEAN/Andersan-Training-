@@ -1,190 +1,182 @@
 package com;
-// HW1 initial commit for PR
-import java.io.IOException;
-import java.util.ArrayList;
+
+import com.db.ReservationDao;
+import com.db.WorkspaceDao;
+
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
-    static ArrayList<Workspace> workspaceList = new ArrayList<>();
-    static ArrayList<Reservation> reservationList = new ArrayList<>();
-    static final String FILE_NAME = "reservations.txt";
-    static PluginClassLoader pluginLoader = new PluginClassLoader("./plugins");
+    private static final Scanner SCAN = new Scanner(System.in);
+
+    private static final WorkspaceManager manager = new WorkspaceManager();
+    private static final WorkspaceDao workspaceDao = manager.getWorkspaceDao();
+    private static final ReservationDao reservationDao = manager.getReservationDao();
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-
-
-        workspaceList.add(new Workspace(1, "Open Desk", true));
-        workspaceList.add(new Workspace(2, "Private Room", true));
-
-
-        try {
-            List<Reservation> loaded = FileHandler.loadReservations(FILE_NAME);
-            reservationList.addAll(loaded);
-            for (Reservation r : loaded) {
-                for (Workspace w : workspaceList) {
-                    if (w.getId() == r.getWorkspaceId()) {
-                        w.addReservation(r);
-                        w.setAvailable(false);
-                    }
-                }
-            }
-            System.out.println("Reservations loaded successfully.");
-        } catch (IOException e) {
-            System.out.println("Error loading reservations: " + e.getMessage());
-        }
+        System.out.println("=== Coworking Space Reservation ===");
 
         boolean running = true;
-
         while (running) {
-            System.out.println("\n=== Main Menu ===");
+            System.out.println();
+            System.out.println("Main Menu");
             System.out.println("1. Admin Login");
             System.out.println("2. Customer Login");
             System.out.println("3. Exit");
-            System.out.print("Choose an option: ");
-            String input = scanner.nextLine();
-
-            switch (input) {
-                case "1":
-                    adminMenu(scanner);
-                    break;
-                case "2":
-                    customerMenu(scanner);
-                    break;
-                case "3":
-                    running = false;
-                    break;
-                default:
-                    System.out.println("Invalid input.");
+            System.out.print("Choose: ");
+            switch (readLine().trim()) {
+                case "1" -> adminMenu();
+                case "2" -> customerMenu();
+                case "3" -> running = false;
+                default  -> System.out.println("Invalid choice.");
             }
         }
 
+        System.out.println("Goodbye.");
+    }
 
+    /* -------------------- Admin -------------------- */
+
+    private static void adminMenu() {
+        boolean back = false;
+        while (!back) {
+            System.out.println();
+            System.out.println("--- Admin Menu ---");
+            System.out.println("1. View all reservations");
+            System.out.println("2. Add workspace");
+            System.out.println("3. Remove workspace");
+            System.out.println("4. Back");
+            System.out.print("Choose: ");
+            switch (readLine().trim()) {
+                case "1" -> adminShowAllReservations();
+                case "2" -> adminAddWorkspace();
+                case "3" -> adminRemoveWorkspace();
+                case "4" -> back = true;
+                default  -> System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    private static void adminShowAllReservations() {
+        List<Reservation> all = reservationDao.findAll();
+        if (all.isEmpty()) {
+            System.out.println("(no reservations)");
+            return;
+        }
+        all.forEach(System.out::println);
+    }
+
+    private static void adminAddWorkspace() {
+        System.out.print("Workspace type: ");
+        String type = readLine().trim();
+        if (type.isEmpty()) {
+            System.out.println("Type required.");
+            return;
+        }
+        int newId = workspaceDao.insert(type, true);
+        if (newId > 0) {
+            manager.reloadFromDb();
+            System.out.println("Workspace added with ID: " + newId);
+        } else {
+            System.out.println("Failed to add workspace.");
+        }
+    }
+
+    private static void adminRemoveWorkspace() {
+        int id = readInt("Workspace ID to remove: ");
+        if (id < 0) return;
+        boolean deleted = workspaceDao.delete(id);
+        if (deleted) {
+            manager.reloadFromDb();
+            System.out.println("Removed.");
+        } else {
+            System.out.println("No such workspace.");
+        }
+    }
+
+    /* -------------------- Customer -------------------- */
+
+    private static void customerMenu() {
+        boolean back = false;
+        while (!back) {
+            System.out.println();
+            System.out.println("--- Customer Menu ---");
+            System.out.println("1. View available spaces");
+            System.out.println("2. Make reservation");
+            System.out.println("3. Cancel reservation");
+            System.out.println("4. Back");
+            System.out.print("Choose: ");
+            switch (readLine().trim()) {
+                case "1" -> customerShowAvailable();
+                case "2" -> customerMakeReservation();
+                case "3" -> customerCancelReservation();
+                case "4" -> back = true;
+                default  -> System.out.println("Invalid choice.");
+            }
+        }
+    }
+
+    private static void customerShowAvailable() {
+        var available = manager.getAvailableWorkspaces();
+        if (available.isEmpty()) {
+            System.out.println("(no available workspaces)");
+            return;
+        }
+        available.forEach(System.out::println);
+    }
+
+    private static void customerMakeReservation() {
+        System.out.print("Your name: ");
+        String name = readLine().trim();
+        if (name.isEmpty()) {
+            System.out.println("Name required.");
+            return;
+        }
+
+        int wid = readInt("Workspace ID: ");
+        if (wid < 0) return;
+
+        System.out.print("Date (yyyy-mm-dd): ");
+        String date = readLine().trim();
+        System.out.print("Start (HH:mm): ");
+        String start = readLine().trim();
+        System.out.print("End   (HH:mm): ");
+        String end = readLine().trim();
+
+        int dbId = manager.makeReservation(name, wid, date, start, end);
+        if (dbId > 0) {
+            System.out.println("Reservation saved. ID = " + dbId);
+        } else {
+            System.out.println("Reservation failed.");
+        }
+    }
+
+    private static void customerCancelReservation() {
+        int rid = readInt("Reservation ID to cancel: ");
+        if (rid < 0) return;
+        boolean ok = manager.cancelReservation(rid);
+        System.out.println(ok ? "Cancelled." : "Not found.");
+    }
+
+    /* -------------------- util -------------------- */
+
+    private static int readInt(String prompt) {
+        System.out.print(prompt);
+        String s = readLine().trim();
         try {
-            FileHandler.saveReservations(reservationList, FILE_NAME);
-            System.out.println("Reservations saved.");
-        } catch (IOException e) {
-            System.out.println("Error saving reservations: " + e.getMessage());
-        }
-
-        scanner.close();
-    }
-
-    private static void adminMenu(Scanner scanner) {
-        boolean back = false;
-        while (!back) {
-            System.out.println("\n--- Admin Menu ---");
-            System.out.println("1. View All Reservations");
-            System.out.println("2. Add Workspace");
-            System.out.println("3. Remove Workspace");
-            System.out.println("4. Back");
-            System.out.print("Choose an option: ");
-            String choice = scanner.nextLine();
-
-            switch (choice) {
-                case "1":
-                    for (Reservation r : reservationList)
-                        System.out.println(r);
-                    break;
-//                case "2":
-//                    System.out.print("Enter ID: ");
-//                    int id = Integer.parseInt(scanner.nextLine());
-//                    System.out.print("Enter Type: ");
-//                    String type = scanner.nextLine();
-//                    workspaceList.add(new Workspace(id, type, true));
-//                    break;
-
-
-                case "2":
-                    System.out.print("Enter fully-qualified class name (e.g., plugins.HotDeskVIP): ");
-                    String fqcn = scanner.nextLine();
-                    try {
-                        Class<?> c = pluginLoader.loadClass(fqcn);
-                        Object obj = c.getDeclaredConstructor().newInstance();
-                        if (obj instanceof Workspace) {
-                            workspaceList.add((Workspace) obj);
-                            System.out.println("Plug-in workspace added: " + obj);
-                        } else {
-                            System.out.println("Class loaded but it is not a Workspace.");
-                        }
-                    } catch (Exception ex) {
-                        System.out.println("Could not load workspace: " + ex.getMessage());
-                    }
-                    break;
-
-
-
-
-
-
-                case "3":
-                    System.out.print("Enter ID to remove: ");
-                    int removeId = Integer.parseInt(scanner.nextLine());
-                    workspaceList.removeIf(w -> w.getId() == removeId);
-                    break;
-                case "4":
-                    back = true;
-                    break;
-                default:
-                    System.out.println("Invalid input.");
-            }
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            System.out.println("Not a number.");
+            return -1;
         }
     }
 
-    private static void customerMenu(Scanner scanner) {
-        boolean back = false;
-        while (!back) {
-            System.out.println("\n--- Customer Menu ---");
-            System.out.println("1. View Available Spaces");
-            System.out.println("2. Make Reservation");
-            System.out.println("3. Cancel Reservation");
-            System.out.println("4. Back");
-            System.out.print("Choose an option: ");
-            String choice = scanner.nextLine();
-
-            switch (choice) {
-                case "1":
-                    for (Workspace w : workspaceList)
-                        if (w.isAvailable()) System.out.println(w);
-                    break;
-                case "2":
-                    System.out.print("Enter your name: ");
-                    String name = scanner.nextLine();
-                    System.out.print("Enter Workspace ID: ");
-                    int id = Integer.parseInt(scanner.nextLine());
-                    System.out.print("Date (yyyy-mm-dd): ");
-                    String date = scanner.nextLine();
-                    System.out.print("Start Time: ");
-                    String start = scanner.nextLine();
-                    System.out.print("End Time: ");
-                    String end = scanner.nextLine();
-
-                    Reservation res = new Reservation(name, id, date, start, end);
-                    reservationList.add(res);
-                    for (Workspace w : workspaceList) {
-                        if (w.getId() == id) {
-                            w.addReservation(res);
-                            w.setAvailable(false);
-                        }
-                    }
-
-                    System.out.println("Reservation made with ID: " + res.getReservationId());
-                    break;
-                case "3":
-                    System.out.print("Enter Reservation ID to cancel: ");
-                    int resId = Integer.parseInt(scanner.nextLine());
-                    reservationList.removeIf(r -> r.getReservationId() == resId);
-                    System.out.println("Reservation cancelled.");
-                    break;
-                case "4":
-                    back = true;
-                    break;
-                default:
-                    System.out.println("Invalid input.");
-            }
+    private static String readLine() {
+        if (!SCAN.hasNextLine()) {
+            System.out.println("\n(no more input) exiting.");
+            System.exit(0);
         }
+        return SCAN.nextLine();
     }
-
 }
