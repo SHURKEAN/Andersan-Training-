@@ -1,0 +1,9 @@
+# IDE metadata
+.idea/
+
+# IntelliJ build artefacts
+out/
+
+# Maven / Gradle build artefacts
+target/
+build/
