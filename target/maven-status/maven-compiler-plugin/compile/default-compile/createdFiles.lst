@@ -1,8 +1,13 @@
 com\Main.class
-com\Workspace.class
 com\WorkspaceManager.class
 plugins\HotDeskVIP.class
-com\Reservation.class
-com\ReservationException.class
+com\db\WorkspaceDao.class
 com\PluginClassLoader.class
+com\db\Db.class
+com\db\DbSmoke.class
+com\db\ReservationDao.class
+com\Workspace.class
+com\Reservation.class
+com\db\ReservationDao$1.class
+com\ReservationException.class
 com\FileHandler.class
