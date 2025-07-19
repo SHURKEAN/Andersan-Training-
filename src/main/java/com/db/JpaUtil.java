@@ -10,4 +10,8 @@ public final class JpaUtil {
     public static EntityManager em() {
         return EMF.createEntityManager();
     }
+
+    public static EntityManager getEm() {
+        return null;
+    }
 }

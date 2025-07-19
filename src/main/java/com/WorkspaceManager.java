@@ -65,10 +65,15 @@ public class WorkspaceManager {
     }
 
     public boolean cancelReservation(int resId) {
-        boolean ok = reservationDao.delete(resId);
-        if (ok) reloadFromDb();
-        return ok;
+        Workspace ws = reservationDao.delete(resId);
+        if (ws != null) {                         // reservation existed
+            workspaceDao.updateAvailability(ws.getId(), true);
+            reloadFromDb();
+            return true;
+        }
+        return false;
     }
+
 
     /* ------------ query & display ------------ */
 
