@@ -7,11 +7,12 @@ import com.example.andersantrainingspring.repository.WorkspaceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
-@Service               // ← makes it a Spring bean
-@Transactional         // ← each public method runs in a DB txn
+@Service
+@Transactional
 public class WorkspaceService {
 
     private final WorkspaceRepository workspaceRepo;
@@ -23,14 +24,16 @@ public class WorkspaceService {
         this.reservationRepo = reservationRepo;
     }
 
-    /* ────── Workspace operations ────── */
+    /* ── Workspace ── */
 
     public Workspace addWorkspace(String type, boolean available) {
         return workspaceRepo.save(new Workspace(type, available));
     }
 
     public boolean removeWorkspace(int id) {
-        if (!workspaceRepo.existsById((long) id)) return false;
+        if (!workspaceRepo.existsById((long) id)) {
+            return false;
+        }
         workspaceRepo.deleteById((long) id);
         return true;
     }
@@ -46,7 +49,7 @@ public class WorkspaceService {
                 .toList();
     }
 
-    /* ────── Reservation operations ────── */
+    /* ── Reservation ── */
 
     public Reservation makeReservation(String customer,
                                        int workspaceId,
@@ -54,26 +57,29 @@ public class WorkspaceService {
                                        String start,
                                        String end) {
 
-        Workspace ws = workspaceRepo.findById((long) workspaceId)
+        Workspace workspace = workspaceRepo.findById((long) workspaceId)
                 .filter(Workspace::isAvailable)
-                .orElseThrow(() -> new IllegalStateException("Not available"));
+                .orElseThrow(() -> new IllegalStateException("Workspace not available"));
 
-        ws.setAvailable(false); // flip flag
-        Reservation res = new Reservation(customer, ws,
-                java.time.LocalDate.parse(date),
-                java.time.LocalTime.parse(start),
-                java.time.LocalTime.parse(end));
-        return reservationRepo.save(res);
+        workspace.setAvailable(false);
+
+        Reservation reservation = new Reservation(
+                customer,
+                workspace,
+                LocalDate.parse(date),
+                LocalTime.parse(start),
+                LocalTime.parse(end)
+        );
+
+        return reservationRepo.save(reservation);
     }
 
     public boolean cancelReservation(int reservationId) {
-        return reservationRepo.findById((long) reservationId).map(res -> {
-            Workspace ws = res.getWorkspace();
-            ws.setAvailable(true);
-            reservationRepo.delete(res);
+        return reservationRepo.findById((long) reservationId).map(reservation -> {
+            Workspace workspace = reservation.getWorkspace();
+            workspace.setAvailable(true);
+            reservationRepo.delete(reservation);
             return true;
         }).orElse(false);
     }
-
-
 }
