@@ -74,12 +74,19 @@ public class WorkspaceService {
         return reservationRepo.save(reservation);
     }
 
-    public boolean cancelReservation(int reservationId) {
-        return reservationRepo.findById((long) reservationId).map(reservation -> {
+    public void cancelReservation(int reservationId) {
+        reservationRepo.findById((long) reservationId).map(reservation -> {
             Workspace workspace = reservation.getWorkspace();
             workspace.setAvailable(true);
             reservationRepo.delete(reservation);
             return true;
-        }).orElse(false);
+        });
+    }
+
+    public Object getAll() {
+        return null;
+    }
+
+    public void deleteWorkspace(int id) {
     }
 }

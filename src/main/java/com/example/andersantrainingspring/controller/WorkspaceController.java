@@ -2,12 +2,12 @@ package com.example.andersantrainingspring.controller;
 
 import com.example.andersantrainingspring.domain.Workspace;
 import com.example.andersantrainingspring.service.WorkspaceService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-@RestController
-@RequestMapping("/api/workspaces")
+@Controller
+@RequestMapping("/workspaces")
 public class WorkspaceController {
 
     private final WorkspaceService service;
@@ -16,21 +16,27 @@ public class WorkspaceController {
         this.service = service;
     }
 
-    /** GET /api/workspaces  →  all workspaces */
     @GetMapping
-    public List<Workspace> all() {
-        return service.listAll();
+    public String list(Model model) {
+        model.addAttribute("workspaces", service.getAll());
+        return "workspace/list";
     }
 
-    /** POST /api/workspaces  (JSON body: {"type":"Desk","available":true}) */
-    @PostMapping
-    public Workspace add(@RequestBody Workspace dto) {
-        return service.addWorkspace(dto.getType(), dto.isAvailable());
+    @GetMapping("/add")
+    public String showAddForm() {
+        return "workspace/add";
     }
 
-    /** DELETE /api/workspaces/{id} */
-    @DeleteMapping("{id}")
-    public void delete(@PathVariable int id) {
-        service.removeWorkspace(id);
+    @PostMapping("/add")
+    public String add(@RequestParam String type,
+                      @RequestParam(defaultValue = "true") boolean available) {
+        service.addWorkspace(type, available);
+        return "redirect:/workspaces";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable int id) {
+        service.deleteWorkspace(id);
+        return "redirect:/workspaces";
     }
 }
