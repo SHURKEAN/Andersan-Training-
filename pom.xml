@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Boot manages dependency versions -->
+    <!-- Spring Boot BOM -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -29,7 +29,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Data JPA + Hibernate + HikariCP -->
+        <!-- Spring Data JPA + Hibernate + HikariCP -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -41,10 +41,16 @@
             <artifactId>postgresql</artifactId>
         </dependency>
 
-        <!-- Bean validation (optional but nice) -->
+        <!-- Bean validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ✨ NEW: Spring Security starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <!-- Tests -->
@@ -63,4 +69,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
