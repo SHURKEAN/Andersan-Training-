@@ -2,6 +2,7 @@ package com.example.andersantrainingspring.service;
 
 import com.example.andersantrainingspring.domain.Reservation;
 import com.example.andersantrainingspring.domain.Workspace;
+import com.example.andersantrainingspring.factory.ReservationFactory;    // 👈 Factory
 import com.example.andersantrainingspring.repository.ReservationRepository;
 import com.example.andersantrainingspring.repository.WorkspaceRepository;
 import org.springframework.stereotype.Service;
@@ -27,24 +28,25 @@ public class WorkspaceService {
     /* ── Workspace ── */
 
     public Workspace addWorkspace(String type, boolean available) {
-        return workspaceRepo.save(new Workspace(type, available));
+        Workspace w = workspaceRepo.save(new Workspace(type, available));
+
+        /* -------------- Singleton pattern in action -------------- */
+        NotificationService.getInstance()
+                .sendNotification("Workspace " + w.getId() + " created");
+        /* --------------------------------------------------------- */
+
+        return w;
     }
 
     public boolean removeWorkspace(int id) {
-        if (!workspaceRepo.existsById((long) id)) {
-            return false;
-        }
+        if (!workspaceRepo.existsById((long) id)) return false;
         workspaceRepo.deleteById((long) id);
         return true;
     }
 
-    public List<Workspace> listAll() {
-        return workspaceRepo.findAll();
-    }
-
-    public List<Workspace> listAvailable() {
-        return workspaceRepo.findAll()
-                .stream()
+    public List<Workspace> listAll()            { return workspaceRepo.findAll(); }
+    public List<Workspace> listAvailable()      {
+        return workspaceRepo.findAll().stream()
                 .filter(Workspace::isAvailable)
                 .toList();
     }
@@ -57,38 +59,45 @@ public class WorkspaceService {
                                        String start,
                                        String end) {
 
-        Workspace workspace = workspaceRepo.findById((long) workspaceId)
+        Workspace ws = workspaceRepo.findById((long) workspaceId)
                 .filter(Workspace::isAvailable)
                 .orElseThrow(() -> new IllegalStateException("Workspace not available"));
 
-        workspace.setAvailable(false);
+        ws.setAvailable(false);
 
-        Reservation reservation = new Reservation(
+        /* ---------- Factory Method pattern in action ---------- */
+        Reservation res = ReservationFactory.createReservation(
                 customer,
-                workspace,
+                ws,
                 LocalDate.parse(date),
                 LocalTime.parse(start),
                 LocalTime.parse(end)
         );
+        /* ------------------------------------------------------ */
 
-        return reservationRepo.save(reservation);
+        reservationRepo.save(res);
+
+        /* notify */
+        NotificationService.getInstance()
+                .sendNotification("Reservation " + res.getId() +
+                        " created for workspace " + ws.getId());
+
+        return res;
     }
 
     public boolean cancelReservation(int reservationId) {
-        reservationRepo.findById((long) reservationId).map(reservation -> {
-            Workspace workspace = reservation.getWorkspace();
-            workspace.setAvailable(true);
-            reservationRepo.delete(reservation);
+        return reservationRepo.findById((long) reservationId).map(res -> {
+            Workspace ws = res.getWorkspace();
+            ws.setAvailable(true);
+            reservationRepo.delete(res);
+
+            NotificationService.getInstance()
+                    .sendNotification("Reservation " + res.getId() + " cancelled");
             return true;
-        });
-        return false;
+        }).orElse(false);
     }
 
-    public Object getAll() {
-        return null;
-    }
-
-    public boolean deleteWorkspace(int id) {
-        return false;
-    }
+    /* (legacy stubs you haven't used) */
+    public Object getAll()                { return null; }
+    public boolean deleteWorkspace(int id){ return false; }
 }
