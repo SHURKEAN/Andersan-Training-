@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: coworking_space
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 3425
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/coworking_space
+      DB_USER: postgres
+      DB_PASS: 3425
+    ports:
+      - "8080:8080"
